@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="si"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Early Birds"><meta name="theme-color" content="#124a8c">
+<title>Early Birds</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+:root{--gb:rgba(255,255,255,.6);padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px);box-sizing:border-box}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#124a8c}
+body::before{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(circle at 12% 8%,rgba(140,255,210,.9) 0,transparent 34%),radial-gradient(circle at 92% 16%,rgba(90,185,255,.95) 0,transparent 40%),radial-gradient(circle at 30% 70%,rgba(255,255,255,.18) 0,transparent 22%),radial-gradient(circle at 60% 105%,#3d95e8 0,transparent 55%),linear-gradient(160deg,#0f8a7e,#134f98 55%,#0a2c5c)}
+body{font:15px 'Segoe UI',system-ui,sans-serif;color:#fff;text-shadow:0 1px 2px rgba(0,30,60,.65)}
+#app{padding-bottom:96px;max-width:760px;margin:0 auto}
+.card{position:relative;margin:10px;padding:14px;border-radius:12px;border:1px solid var(--gb);background:linear-gradient(180deg,rgba(255,255,255,.45) 0,rgba(255,255,255,.16) 40%,rgba(255,255,255,.1) 100%);box-shadow:0 8px 26px rgba(0,20,50,.4),inset 0 1px 0 rgba(255,255,255,.8),inset 0 -1px 0 rgba(255,255,255,.2);-webkit-backdrop-filter:blur(16px) saturate(1.6);backdrop-filter:blur(16px) saturate(1.6)}
+h3{margin:0 0 10px;font-weight:600;font-size:17px}
+.hd{display:flex;justify-content:space-between;align-items:center;gap:6px}
+nav{position:fixed;left:0;right:0;bottom:0;z-index:5;display:flex;gap:4px;overflow-x:auto;padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--gb);background:linear-gradient(180deg,rgba(255,255,255,.35),rgba(10,50,100,.55));-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+nav button{flex:1 0 auto;min-width:56px;display:flex;flex-direction:column;align-items:center;font-size:10px;padding:5px 6px;margin:0}
+nav button b{font-size:19px;font-weight:400}
+button,select,input,textarea{font:inherit;border-radius:6px;padding:9px 12px;margin:3px 3px 3px 0;text-shadow:none}
+button{cursor:pointer;color:#06314f;border:1px solid #2a6f9c;background:linear-gradient(#e9f8ff 0,#aadcf7 48%,#62b8ea 52%,#b0e6ff 100%);box-shadow:inset 0 1px 0 #fff,0 1px 3px rgba(0,0,0,.35)}
+button:active{filter:brightness(.92)}
+button.on{background:linear-gradient(#fff6c8,#ffd66b 48%,#ffb92e 52%,#ffe39a);border-color:#a56a00}
+button.ok{background:linear-gradient(#e8ffe8,#9be59b 48%,#3cb64a 52%,#a6f0a6);border-color:#1d7a28}
+button.no{background:linear-gradient(#ffeaea,#f3a0a0 48%,#d64545 52%,#f6b0b0);border-color:#8a1f1f}
+input,select,textarea{background:rgba(255,255,255,.85);border:1px solid #fff;color:#0a2a3d;font-size:16px;max-width:100%}
+.f{display:block;margin:8px 0}.f span{display:block;font-size:12px;margin-bottom:2px}.f input,.f select,textarea{width:100%}
+.r{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.28);flex-wrap:wrap}
+.neg{color:#ff9a9a;font-weight:700}.pos{color:#a6ffa6;font-weight:700}.off{color:#ffe38a}em{font-style:normal}small{opacity:.9}
+.bar{height:10px;border-radius:6px;background:rgba(0,30,60,.4);overflow:hidden;margin:3px 0;box-shadow:inset 0 1px 3px rgba(0,0,0,.4)}.bar i{display:block;height:100%;background:linear-gradient(#cff,#3bd)}
+.pie{width:120px;height:120px;border-radius:50%;border:2px solid #fff7}
+.gt{position:relative;height:16px;margin:4px 0;background:rgba(0,30,60,.35);border-radius:4px}.gt i{position:absolute;top:0;bottom:0;border-radius:4px;background:linear-gradient(#cff,#28c)}
+img.th{height:46px;border-radius:5px;margin-right:4px;vertical-align:middle}
+.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);padding:10px 16px;border-radius:10px;background:rgba(8,36,66,.95);border:1px solid #fff8;z-index:9;max-width:90%;text-align:center}
+.emp{opacity:.8;padding:6px 0}
+@media print{html,body{background:#fff}body::before,nav,button,.hd,input,select,textarea{display:none}body{color:#000;text-shadow:none}.card{background:#fff;box-shadow:none;border:1px solid #888;-webkit-backdrop-filter:none;backdrop-filter:none}.neg{color:#b00}.pos{color:#060}}
+</style></head><body><div id="app"></div>
+<script>
+/* ===== Firebase (optional): paste your config object here before hosting, e.g. {apiKey:"...",projectId:"..."} ===== */
+const FIREBASE_CONFIG=null;
+const KEYS=['u','p','c','d','tx','rq','bl','eq','sr','nt','it'];
+const ld=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}};
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const $=s=>document.querySelector(s),vr=i=>($('#'+i)||{}).value||'',v=i=>esc(vr(i)),L=(a,f)=>a.map(f).join('');
+const now=()=>new Date().toISOString(),today=()=>now().slice(0,10),fd=t=>new Date(t).toLocaleString('en-GB'),rs=n=>(n<0?'-':'')+'රු. '+Math.abs(n).toLocaleString();
+const uid=()=>Date.now()*10+Math.floor(Math.random()*10),sm=a=>a.reduce((x,y)=>x+y.a,0);
+let D=Object.fromEntries(KEYS.map(k=>[k,[]])),Q=ld('ebq',[]),UID=ld('ebu',null),U=null,T='',E=0,DL=0,RP=0,RU=0,PH={},DB=0,LK={},rd={};
+const CFG=FIREBASE_CONFIG||ld('ebcfg',null);
+if(CFG&&window.firebase){try{firebase.initializeApp(CFG);DB=firebase.firestore();try{DB.enablePersistence({synchronizeTabs:true}).catch(()=>{})}catch(e){}
+KEYS.forEach(k=>DB.collection(k).onSnapshot(s=>{D[k]=s.docs.map(d=>d.data()).sort((a,b)=>a.id-b.id);Object.keys(LK).forEach(z=>{if(z.startsWith(k+'/'))delete LK[z]});D[k].forEach(x=>LK[k+'/'+x.id]=JSON.stringify(x));rd[k]=1;sched()},e=>toast('Cloud error: '+e.code)))}catch(e){DB=0}}
+if(!DB)Object.assign(D,ld('eb2',{}));
+function save(){if(!DB){try{localStorage.setItem('eb2',JSON.stringify(D));localStorage.setItem('ebq',JSON.stringify(Q))}catch(e){toast('Storage පිරී ඇත')}return}
+KEYS.forEach(k=>{const seen={};D[k].forEach(x=>{const i=k+'/'+x.id,j=JSON.stringify(x);seen[i]=1;if(LK[i]!==j){LK[i]=j;DB.collection(k).doc(String(x.id)).set(x).catch(e=>toast('Save error: '+e.code))}});
+Object.keys(LK).forEach(i=>{if(i.startsWith(k+'/')&&!seen[i]){delete LK[i];DB.collection(k).doc(i.slice(k.length+1)).delete()}})})}
+const toast=m=>{const d=document.createElement('div');d.className='toast';d.textContent=m;document.body.appendChild(d);setTimeout(()=>d.remove(),2800)};
+const pn=i=>(D.p.find(x=>x.id==i)||{}).n||'-',un=i=>(D.u.find(x=>x.id==i)||{}).n||'-';
+const mine=()=>U.r=='A'?D.p:D.p.filter(p=>p.s==U.id),SUP=()=>D.u.filter(u=>u.r=='S');
+const spent=p=>sm(D.bl.filter(b=>b.p==p&&b.st!='rej'));
+const bal=s=>sm(D.tx.filter(x=>x.s==s&&x.st=='ok'))+sm(D.rq.filter(x=>x.s==s&&x.st=='ok'))-sm(D.bl.filter(x=>x.s==s&&x.st!='rej'));
+const balH=n=>`<b class="${n<0?'neg':'pos'}">${rs(n)}</b>`,emp='<div class=emp>තවම නැත</div>';
+const st=s=>s=='ok'?'<em class=pos>Approved</em>':s=='rej'?'<em class=neg>Rejected</em>':'<em class=off>Pending</em>';
+const popt=a=>L(a,p=>`<option value="${p.id}">${p.n}</option>`),bar=(p,c)=>`<div class=bar><i style="width:${Math.min(100,Math.max(0,p))}%;${c?'background:'+c:''}"></i></div>`;
+const fld=(l,h)=>`<label class=f><span>${l}</span>${h}</label>`,card=h=>`<div class=card style="max-width:430px;margin:8vh auto">${h}</div>`;
+const hav=(a,b,c,d)=>{const f=x=>x*Math.PI/180,x=f(c-a),y=f(d-b),h=Math.sin(x/2)**2+Math.cos(f(a))*Math.cos(f(c))*Math.sin(y/2)**2;return 12742*Math.asin(Math.sqrt(h))};
+const chr=c=>`<div class=r><span>${un(c.s)} • ${pn(c.p)} • ${c.ty=='i'?'Check-in':'Check-out'}${c.off?' <em class=off>Offline record</em>':''}</span><small>${fd(c.t)}</small></div>`;
+const thumb=s=>s?`<img class=th src="${s}">`:'';
+async function H(p){try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('eb:'+p));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}catch(e){return 'p:'+p}}
+function pick(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const i=new Image();i.onload=()=>{const c=document.createElement('canvas'),k=Math.min(1,420/i.width);c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);PH[e.target.id]=c.toDataURL('image/jpeg',.55);e.target.nextElementSibling.textContent=' ✔ ඡායාරූපය සූදානම්'};i.src=r.result};r.readAsDataURL(f)}
+const file=id=>fld('ඡායාරූපය',`<input type=file accept="image/*" id=${id} onchange="pick(event)"><i></i>`);
+
+/* Setup / login */
+function parseCfg(t){try{return JSON.parse(t.slice(t.indexOf('{'),t.lastIndexOf('}')+1).replace(/([{,]\s*)([A-Za-z_]\w*)\s*:/g,'$1"$2":').replace(/,\s*}/g,'}'))}catch(e){return null}}
+function useCfg(){const c=parseCfg(vr('cfg'));if(!c||!c.apiKey||!c.projectId)return toast('Config එක වැරදියි (apiKey, projectId ඕන)');try{localStorage.setItem('ebcfg',JSON.stringify(c))}catch(e){}location.reload()}
+function offCfg(){try{localStorage.removeItem('ebcfg')}catch(e){}location.reload()}
+async function mkAdmin(){const n=v('an').trim(),p=vr('ap');if(!n)return toast('නම දාන්න');if(p.length<4)return toast('Password අකුරු 4ක් හෝ වැඩි විය යුතුයි');if(p!=vr('ap2'))return toast('Password දෙක ගැළපෙන්නේ නැහැ');
+const u={id:uid(),n,h:await H(p),r:'A'};D.u.push(u);save();UID=u.id;try{localStorage.setItem('ebu',JSON.stringify(UID))}catch(e){}toast('Setup සම්පූර්ණයි ✔');R()}
+async function login(){const u=D.u.find(x=>x.id==vr('lu'));if(!u||u.h!==await H(vr('lp')))return toast('Password වැරදියි');UID=u.id;try{localStorage.setItem('ebu',JSON.stringify(UID))}catch(e){}T='';R()}
+function out(){UID=null;try{localStorage.removeItem('ebu')}catch(e){}R()}
+async function chPw(){const p=vr('pw1');if(p.length<4)return toast('Password අකුරු 4ක් හෝ වැඩි විය යුතුයි');if(p!=vr('pw2'))return toast('Password දෙක ගැළපෙන්නේ නැහැ');U.h=await H(p);save();toast('Password වෙනස් විය ✔');R()}
+async function mkU(){const n=v('un').trim(),p=vr('up');if(!n||p.length<4)return toast('නම සහ Password (4+) දාන්න');if(D.u.some(u=>u.n==n))return toast('මේ නම දැනටමත් තියෙනවා');D.u.push({id:uid(),n,h:await H(p),r:'S'});save();toast('Supervisor එකතු විය ✔');R()}
+async function rsU(i){const p=vr('rpw');if(RU!=i){RU=i;return R()}if(p.length<4)return toast('Password (4+) දාන්න');D.u.find(u=>u.id==i).h=await H(p);RU=0;save();toast('Password reset විය ✔');R()}
+function delU(i){if(DL!='u'+i){DL='u'+i;return toast('Delete කිරීමට නැවත ඔබන්න')}D.u=D.u.filter(u=>u.id!=i);D.p.forEach(p=>{if(p.s==i)p.s=''});DL=0;save();R()}
+const pwCard=()=>`<div class=card><h3>🔑 මගේ Password වෙනස් කරන්න</h3>${fld('අලුත් Password','<input id=pw1 type=password>')}${fld('නැවත','<input id=pw2 type=password>')}<button class=ok onclick=chPw()>Save</button></div>`;
+
+/* Check-in */
+function ci(ty){const p=D.p.find(x=>x.id==vr('cp'));if(!p)return toast('Project තෝරන්න');if(p.lat==null)return toast('Admin විසින් site GPS set කළ යුතුයි');
+toast('GPS සොයමින්...');navigator.geolocation.getCurrentPosition(g=>{const d=hav(g.coords.latitude,g.coords.longitude,p.lat,p.lng);if(d>1)return toast('Site එකෙන් '+d.toFixed(2)+' km ඈතයි (1 km ඇතුළත විය යුතුයි)');
+const r={id:uid(),p:p.id,s:U.id,ty,t:now(),d,off:!navigator.onLine};
+if(r.off&&!DB){Q.push(r);toast('Offline: phone එකේ save විය, signal ආවම sync වේ')}else{D.c.push(r);toast(r.off?'Offline: signal ආවම sync වේ':ty=='i'?'Check-in විය ✔':'Check-out විය ✔')}save();R()},()=>toast('GPS ලබාගත නොහැක (Location allow කරන්න)'),{enableHighAccuracy:true,timeout:15000})}
+function sync(){if(!DB&&navigator.onLine&&Q.length){D.c.push(...Q);Q=[];save();toast('Offline records sync විය');if(U)R()}}
+addEventListener('online',sync);
+
+/* Projects */
+const pf=(p,x)=>fld('Project නම',`<input id=${x}n value="${p.n||''}">`)+fld('ස්ථානය',`<input id=${x}l value="${p.l||''}">`)+fld('Supervisor',`<select id=${x}s><option value="">- තෝරන්න -</option>${L(SUP(),u=>`<option value=${u.id} ${u.id==p.s?'selected':''}>${u.n}</option>`)}</select>`)+fld('ආරම්භ දිනය',`<input id=${x}a type=date value="${p.a||today()}">`)+fld('අවසන් දිනය',`<input id=${x}b type=date value="${p.b||today()}">`)+fld('Budget (රු.)',`<input id=${x}bu type=number value="${p.bud||''}">`)+(x=='e'?fld('Progress %',`<input id=ep type=number value="${p.pr||0}">`)+fld('තත්ත්වය',`<select id=est>${['ongoing','hold','done'].map(z=>`<option ${z==p.st?'selected':''}>${z}</option>`).join('')}</select>`):'')+fld('Site GPS (check-in සඳහා)',`<input id=${x}lat placeholder=Latitude value="${p.lat==null?'':p.lat}"><input id=${x}lng placeholder=Longitude value="${p.lng==null?'':p.lng}"><button onclick="gps('${x}')">📍 දැන් ඉන්න තැන ගන්න</button>`);
+const rdP=x=>({n:v(x+'n').trim(),l:v(x+'l'),s:vr(x+'s'),a:vr(x+'a'),b:vr(x+'b'),bud:+vr(x+'bu')||0,lat:vr(x+'lat')===''?null:+vr(x+'lat'),lng:vr(x+'lng')===''?null:+vr(x+'lng'),...(x=='e'?{pr:Math.min(100,+vr('ep')||0),st:vr('est')}:{})});
+function mkP(){const o=rdP('n');if(!o.n)return toast('Project නම දාන්න');D.p.push({id:uid(),pr:0,st:'ongoing',...o});save();toast('Project එක හැදුවා ✔');R()}
+function saveP(i){Object.assign(D.p.find(x=>x.id==i),rdP('e'));E=0;save();toast('Save විය ✔');R()}
+function delP(i){if(DL!='p'+i){DL='p'+i;return toast('Delete කිරීමට නැවත ඔබන්න')}D.p=D.p.filter(p=>p.id!=i);DL=0;save();R()}
+function gps(x){navigator.geolocation.getCurrentPosition(g=>{$('#'+x+'lat').value=g.coords.latitude;$('#'+x+'lng').value=g.coords.longitude;toast('GPS ලැබුණා ✔')},()=>toast('GPS ලබාගත නොහැක'))}
+function addEq(p){const n=v('qn'+p).trim();if(!n)return toast('නම දාන්න');D.eq.push({id:uid(),p,n,q:1,st:0,s:U.id});save();R()}
+function retEq(i){const e=D.eq.find(x=>x.id==i);e.rp=1;D.sr.push({id:uid(),ty:'b',s:U.id,p:e.p,it:e.it,q:e.q,eq:e.id,st:'pend',t:now()});save();toast('ආපසු දීමේ ඉල්ලීම යැවුවා');R()}
+function pcard(p){const A=U.r=='A';if(A&&E==p.id)return `<div class=card><h3>✏️ Project edit</h3>${pf(p,'e')}<button class=ok onclick=saveP(${p.id})>Save</button><button onclick="E=0;R()">Cancel</button></div>`;
+const eq=D.eq.filter(e=>e.p==p.id);
+return `<div class=card><div class=r><b>${p.n}</b><span>${p.st}</span></div><div>📍 ${p.l||'-'} • Supervisor: ${p.s?un(p.s):'-'}</div>${bar(p.pr)}<small>Progress ${p.pr}% • ${p.a} → ${p.b}${p.lat==null?' • <em class=off>Site GPS set කර නැත</em>':''}</small><div class=r><span>Budget ${rs(p.bud)}</span><span>වියදම ${rs(spent(p.id))}</span></div>
+<b>Equipment</b>${L(eq,e=>`<div class=r><span>${e.n} ×${e.q} ${e.st?'':'<small>(අතින්)</small>'}</span>${U.r=='S'&&e.st?(e.rp?'<em class=off>ආපසු Pending</em>':`<button onclick=retEq(${e.id})>ආපසු දෙන්න</button>`):''}</div>`)||emp}
+${A?`<button onclick="E=${p.id};R()">✏️ Edit</button><button class=no onclick=delP(${p.id})>🗑 Delete</button>`:`<label class=f><span>Equipment එකතු කරන්න (Stores නොවන)</span><input id="qn${p.id}"></label><button onclick=addEq(${p.id})>Add</button>`}</div>`}
+
+/* Money, bills, daily, stores */
+function sendM(){const a=+vr('ma');if(!(a>0)||!vr('ms'))return toast('Supervisor සහ ප්‍රමාණය දාන්න');D.tx.push({id:uid(),s:vr('ms'),a,p:vr('mp'),st:'pend',t:now()});save();toast('මුදල් යැවුවා (Supervisor තහවුරු කළ යුතුයි)');R()}
+function recv(i){const x=D.tx.find(y=>y.id==i);x.st='ok';x.rt=now();save();toast('Balance එකට එකතු විය ✔');R()}
+function reqM(){const a=+vr('ra');if(!(a>0)||!vr('rp'))return toast('ප්‍රමාණය සහ project දාන්න');D.rq.push({id:uid(),s:U.id,a,p:vr('rp'),st:'pend',t:now()});save();toast('ඉල්ලීම යැවුවා');R()}
+function decR(i,ok){D.rq.find(x=>x.id==i).st=ok?'ok':'rej';save();R()}
+function addB(){const a=+vr('ba');if(!(a>0)||!vr('bp'))return toast('මුදල සහ project දාන්න');D.bl.push({id:uid(),s:U.id,p:vr('bp'),a,ty:vr('bt'),ds:v('bd'),ph:PH.bph||'',st:'pend',t:now()});PH={};save();toast('Bill එක submit විය ✔');R()}
+function decB(i,ok){D.bl.find(x=>x.id==i).st=ok?'ok':'rej';save();R()}
+function subDay(){const p=D.p.find(x=>x.id==vr('dp'));if(!p)return toast('Project තෝරන්න');const pr=Math.min(100,Math.max(0,vr('dg')===''?p.pr:+vr('dg')));D.d.push({id:uid(),p:p.id,s:U.id,w:+vr('dw')||0,ph:v('dh'),n:v('dn'),im:PH.dph||'',pr,t:now()});p.pr=pr;D.nt.push({id:uid(),t:now(),m:`${U.n}: ${p.n} දෛනික දත්ත submit කළා`});PH={};save();toast('Submit විය ✔');R()}
+function addI(){if(!vr('ic')||!vr('in'))return toast('කේතය සහ නම දාන්න');const q=+vr('iq')||0;D.it.push({id:uid(),code:v('ic'),n:v('in'),k:vr('ik'),stock:q,tot:q,ms:0});save();toast('Item එකතු විය ✔');R()}
+function tgM(i){const x=D.it.find(y=>y.id==i);x.ms=x.ms?0:1;save();R()}
+function reqS(){const q=+vr('sq')||1;if(!vr('si')||!vr('sp'))return toast('Item සහ project තෝරන්න');D.sr.push({id:uid(),ty:'r',s:U.id,p:vr('sp'),it:vr('si'),q,st:'pend',t:now()});save();toast('ඉල්ලීම යැවුවා');R()}
+function decS(i,ok){const x=D.sr.find(y=>y.id==i),it=D.it.find(y=>y.id==x.it);
+if(ok){if(!it)return toast('Item එක නැත');if(x.ty=='r'){if(it.stock<x.q)return toast('තොගය මදියි');it.stock-=x.q;D.eq.push({id:uid(),p:x.p,n:it.n,q:x.q,st:1,it:it.id,s:x.s})}else{it.stock+=x.q;D.eq=D.eq.filter(e=>e.id!=x.eq)}x.st='ok'}
+else{x.st='rej';if(x.ty=='b'){const e=D.eq.find(e=>e.id==x.eq);if(e)e.rp=0}}save();R()}
+const srRow=(x,A)=>{const it=D.it.find(i=>i.id==x.it)||{n:'?'};return `<div class=r><span>${A?un(x.s)+' • ':''}${x.ty=='r'?'ඉල්ලීම':'ආපසු'} • ${it.n} ×${x.q} • ${pn(x.p)}</span>${x.st=='pend'&&A?`<span><button class=ok onclick="decS(${x.id},1)">Accept</button><button class=no onclick="decS(${x.id},0)">Reject</button></span>`:st(x.st)}</div>`};
+const pl=p=>{const a=+new Date(p.a),b=+new Date(p.b);return b>a?Math.round(Math.min(1,Math.max(0,(Date.now()-a)/(b-a)))*100):0};
+
+const V={
+dash(){const neg=SUP().filter(u=>bal(u.id)<0),n=a=>a.filter(x=>x.st=='pend').length;
+return `<div class=card><h3>සාරාංශය</h3><div class=r><span>තොගය (ඇති / මුළු)</span><b>${sm(D.it.map(i=>({a:i.stock})))} / ${sm(D.it.map(i=>({a:i.tot})))}</b></div><div class=r><span>මුදල් ඉල්ලීම්</span><b>${n(D.rq)}</b></div><div class=r><span>Store ඉල්ලීම්</span><b>${n(D.sr)}</b></div><div class=r><span>Pending bills</span><b>${n(D.bl)}</b></div><div class=r><span>තහවුරු නොකළ මුදල්</span><b>${n(D.tx)}</b></div></div>
+<div class=card><h3>සෘණ Balance (ගෙවිය යුතු)</h3>${L(neg,u=>`<div class="r neg"><span>${u.n}</span><b>${rs(-bal(u.id))}</b></div>`)||'<div class=emp>නැත 👍</div>'}</div>
+<div class=card><h3>🔔 දැනුම්දීම්</h3>${L(D.nt.slice(-8).reverse(),x=>`<div class=r><span>${x.m}</span><small>${fd(x.t)}</small></div>`)||emp}</div>
+<div class=card><h3>Check-in ඉතිහාසය</h3>${L(D.c.slice(-12).reverse(),chr)||emp}</div>`},
+proj(){return (U.r=='A'?`<div class=card><h3>➕ අලුත් Project</h3>${pf({},'n')}<button class=ok onclick=mkP()>Project හදන්න</button></div>`:'')+(L(mine(),pcard)||'<div class=card>ඔබට assign කළ Project නැත</div>')},
+money(){return `<div class=card><h3>💸 මුදල් යවන්න</h3>${SUP().length?fld('Supervisor',`<select id=ms>${L(SUP(),u=>`<option value=${u.id}>${u.n}</option>`)}</select>`)+fld('Project (අවශ්‍ය නම්)',`<select id=mp><option value="">-</option>${popt(D.p)}</select>`)+fld('ප්‍රමාණය (රු.)','<input id=ma type=number>')+'<button class=ok onclick=sendM()>Send</button>':'<div class=emp>මුලින් Users tab එකෙන් Supervisor කෙනෙක් හදන්න</div>'}</div>
+<div class=card><h3>Balances</h3>${L(SUP(),u=>`<div class=r><span>${u.n}</span>${balH(bal(u.id))}</div>`)||emp}</div>
+<div class=card><h3>මුදල් ඉල්ලීම්</h3>${L([...D.rq].reverse(),x=>`<div class=r><span>${un(x.s)} • ${pn(x.p)} • ${rs(x.a)}</span>${x.st=='pend'?`<span><button class=ok onclick="decR(${x.id},1)">Approve</button><button class=no onclick="decR(${x.id},0)">Reject</button></span>`:st(x.st)}</div>`)||emp}</div>
+<div class=card><h3>යැවූ මුදල්</h3>${L([...D.tx].reverse(),x=>`<div class=r><span>${un(x.s)} • ${rs(x.a)}</span>${x.st=='pend'?'<em class=off>Pending</em>':'<em class=pos>ලැබුණා</em>'}</div>`)||emp}</div>`},
+home(){const b=bal(U.id),my=D.tx.filter(x=>x.s==U.id),P=mine();
+const h=[...my.filter(x=>x.st=='ok').map(x=>({t:x.rt,a:x.a,g:1,m:'Admin මුදල්'})),...D.rq.filter(x=>x.s==U.id&&x.st=='ok').map(x=>({t:x.t,a:x.a,g:1,m:'ඉල්ලූ මුදල'})),...D.bl.filter(x=>x.s==U.id&&x.st!='rej').map(x=>({t:x.t,a:x.a,g:0,m:x.ty+' '+(x.ds||'')}))].sort((x,y)=>y.t.localeCompare(x.t));
+return `<div class=card><h3>💰 Balance</h3><div style="font-size:28px">${balH(b)}</div>${b<0?`<div class=neg>ඔබට ලැබිය යුතු මුදල: ${rs(-b)}</div>`:''}</div>
+${L(my.filter(x=>x.st=='pend'),x=>`<div class=card><div class=r><span>Admin මුදල් යැවීය: <b>${rs(x.a)}</b></span><button class=ok onclick=recv(${x.id})>✔ ලැබුණා</button></div></div>`)}
+<div class=card><h3>මුදල් ඉල්ලන්න</h3>${P.length?fld('ප්‍රමාණය','<input id=ra type=number>')+fld('Project',`<select id=rp>${popt(P)}</select>`)+'<button onclick=reqM()>ඉල්ලන්න</button>':'<div class=emp>Project නැත</div>'}${L(D.rq.filter(x=>x.s==U.id).reverse().slice(0,5),x=>`<div class=r><span>${rs(x.a)} • ${pn(x.p)}</span>${st(x.st)}</div>`)}</div>
+<div class=card><h3>ඉතිහාසය</h3>${L(h,x=>`<div class="r ${x.g?'pos':'neg'}"><span>${x.g?'+':'-'} ${x.m}</span><span>${rs(x.a)}</span></div>`)||emp}</div>`},
+bill(){const A=U.r=='A',B=(A?D.bl:D.bl.filter(b=>b.s==U.id)).slice().reverse(),P=mine();
+return (A?'':`<div class=card><h3>🧾 Expense එකතු කරන්න</h3>${P.length?fld('Project',`<select id=bp>${popt(P)}</select>`)+fld('වර්ගය','<select id=bt><option>ශ්‍රමය</option><option>ද්‍රව්‍ය</option><option>උපකරණ</option></select>')+fld('මුදල (රු.)','<input id=ba type=number>')+fld('විස්තරය','<input id=bd>')+file('bph')+'<button class=ok onclick=addB()>Submit</button><br><small>Balance ඉක්මවුවත් submit කළ හැක (සෘණ ලෙස පෙන්වයි)</small>':'<div class=emp>Project නැත</div>'}</div>`)+`<div class=card><h3>Bills</h3>${L(B,b=>`<div class=r><span>${thumb(b.ph)}${A?un(b.s)+' • ':''}${b.ty} • ${pn(b.p)} • ${rs(b.a)}<br><small>${b.ds||''}</small></span>${A&&b.st=='pend'?`<span><button class=ok onclick="decB(${b.id},1)">Approve</button><button class=no onclick="decB(${b.id},0)">Reject</button></span>`:st(b.st)}</div>`)||emp}</div>`},
+chk(){const P=mine(),my=D.c.filter(c=>c.s==U.id).concat(Q.filter(c=>c.s==U.id)).sort((a,b)=>b.t.localeCompare(a.t)).slice(0,10);
+return `<div class=card><h3>📍 Site Check-in</h3>${P.length?fld('Project',`<select id=cp>${popt(P)}</select>`)+'<button class=ok onclick="ci(\'i\')">✔ Check-in</button><button class=no onclick="ci(\'o\')">⏏ Check-out</button>':'<div class=emp>Project නැත</div>'}<br><small>GPS සහ වේලාව ස්වයංක්‍රීයයි • Site එකේ සිට 1 km ඇතුළත පමණි${Q.length?` • <em class=off>Sync බලාපොරොත්තුවෙන්: ${Q.length}</em>`:''}</small></div><div class=card>${L(my,chr)||emp}</div>`},
+day(){const P=mine();if(!P.length)return '<div class=card>Assign කළ project නැත</div>';
+return `<div class=card><h3>📝 දෛනික දත්ත</h3>${fld('Project',`<select id=dp>${popt(P)}</select>`)}${fld('ශ්‍රමිකයන් ගණන','<input id=dw type=number>')}${fld('වැඩ අදියර','<input id=dh>')}${fld('Progress % (අලුත්)','<input id=dg type=number>')}${fld('සටහන්','<input id=dn>')}${file('dph')}<button class=ok onclick=subDay()>Submit</button></div>
+<div class=card>${L(D.d.filter(x=>x.s==U.id).reverse().slice(0,8),x=>`<div class=r><span>${thumb(x.im)}${pn(x.p)} • 👷${x.w} • ${x.ph} • ${x.pr}%<br><small>${x.n}</small></span><small>${fd(x.t)}</small></div>`)||emp}</div>`},
+store(){const A=U.r=='A';
+if(A)return `<div class=card><h3>📦 Stores තොගය</h3>${L(D.it,i=>`<div class=r><span>${i.k=='T'?'🔧':'🦺'} ${i.code} • ${i.n} ${i.ms?'<em class=neg>Missing</em>':''}</span><span>${i.stock}/${i.tot} <button onclick=tgM(${i.id})>Missing</button></span></div>`)||emp}<hr>${fld('කේතය','<input id=ic>')}${fld('නම','<input id=in>')}${fld('වර්ගය','<select id=ik><option value=T>මෙවලම්</option><option value=S>ආරක්ෂක ද්‍රව්‍ය</option></select>')}${fld('ගණන','<input id=iq type=number>')}<button class=ok onclick=addI()>Item එකතු කරන්න</button></div><div class=card><h3>ඉල්ලීම් / ආපසු දීම්</h3>${L(D.sr.slice().reverse(),x=>srRow(x,1))||emp}</div>`;
+const av=D.it.filter(i=>!i.ms);
+return `<div class=card><h3>📦 Stores</h3>${L(av,i=>`<div class=r><span>${i.k=='T'?'🔧':'🦺'} ${i.n}</span><small>ඇත: ${i.stock}</small></div>`)||emp}${av.length?fld('Item',`<select id=si>${L(av,i=>`<option value=${i.id}>${i.n}</option>`)}</select>`)+fld('Project',`<select id=sp>${popt(mine())}</select>`)+fld('ගණන','<input id=sq type=number value=1>')+'<button onclick=reqS()>Request</button>':''}</div><div class=card><h3>මගේ ඉල්ලීම්</h3>${L(D.sr.filter(x=>x.s==U.id).reverse(),x=>srRow(x,0))||emp}<small>ආපසු දීම Projects tab එකෙන්</small></div>`},
+users(){return `<div class=card><h3>➕ අලුත් Supervisor</h3>${fld('නම','<input id=un>')}${fld('Password (අකුරු 4+)','<input id=up type=password>')}<button class=ok onclick=mkU()>Add</button></div>
+<div class=card><h3>👥 Supervisors</h3>${L(SUP(),u=>`<div class=r><span>${u.n}</span><span>${RU==u.id?`<input id=rpw type=password placeholder="අලුත් password" style="width:140px">`:''}<button onclick="rsU(${u.id})">${RU==u.id?'Save':'Password reset'}</button><button class=no onclick=delU(${u.id})>Delete</button></span></div>`)||emp}</div>${pwCard()}
+<div class=card><h3>☁️ Cloud</h3>${DB?'<div class=pos>Firebase සම්බන්ධයි - සියලු device වල data share වේ</div>'+(FIREBASE_CONFIG?'':'<button class=no onclick=offCfg()>මේ device එකෙන් Cloud අයින් කරන්න</button>'):'<div class=off>Cloud සම්බන්ධ නැත - data ඇත්තේ මේ phone එකේ පමණි</div>'}</div>`},
+me(){return pwCard()},
+rep(){const P=D.p,cats=['ශ්‍රමය','ද්‍රව්‍ය','උපකරණ'],cols=['#ffb347','#5dd6ff','#9bff8a'],vals=cats.map(c=>sm(D.bl.filter(b=>b.ty==c&&b.st!='rej'&&(!RP||b.p==RP)))),tot=vals.reduce((a,b)=>a+b,0);
+let acc=0;const cg=tot?vals.map((x,i)=>{const s=acc/tot*100;acc+=x;return `${cols[i]} ${s}% ${acc/tot*100}%`}).join(','):'#789 0 100%';
+const mn=Math.min(...P.map(p=>+new Date(p.a))),mx=Math.max(...P.map(p=>+new Date(p.b))),sp=mx-mn||1;
+return `<div class=card><button onclick="window.print()">📄 PDF report download</button><small> (Print → Save as PDF)</small></div>
+<div class=card><h3>Progress: Plan vs Actual</h3>${L(P,p=>`<div><b>${p.n}</b><br><small>Plan ${pl(p)}%</small>${bar(pl(p),'#ffd66b')}<small>Actual ${p.pr}%</small>${bar(p.pr)}</div>`)||emp}</div>
+<div class=card><h3>Finance: Budget vs වියදම</h3>${L(P,p=>{const s=spent(p.id),m=Math.max(p.bud,s)||1;return `<div><b>${p.n}</b><br><small>Budget ${rs(p.bud)}</small>${bar(p.bud/m*100,'#8cf')}<small>වියදම ${rs(s)}</small>${bar(s/m*100,s>p.bud?'#f66':'#9f9')}</div>`})||emp}</div>
+<div class=card><h3>වියදම් Pie</h3><select onchange="RP=this.value;R()"><option value=0>සියල්ල</option>${L(P,p=>`<option value=${p.id} ${p.id==RP?'selected':''}>${p.n}</option>`)}</select><div class=r><div class=pie style="background:conic-gradient(${cg})"></div><div>${L(cats,(c,i)=>`<div><span style="color:${cols[i]}">■</span> ${c}: ${rs(vals[i])}</div>`)}</div></div></div>
+<div class=card><h3>Timeline (Gantt)</h3>${L(P,p=>`<small>${p.n} (${p.a} → ${p.b})</small><div class=gt><i style="left:${(+new Date(p.a)-mn)/sp*100}%;width:${Math.max(2,(+new Date(p.b)-+new Date(p.a))/sp*100)}%"></i></div>`)||emp}</div>`}
+};
+const TABS={A:[['dash','🏠','Dashboard'],['proj','🏗️','Projects'],['money','💰','මුදල්'],['bill','🧾','Bills'],['store','📦','Stores'],['rep','📊','Reports'],['users','👥','Users']],S:[['home','💰','මුදල්'],['proj','🏗️','Projects'],['chk','📍','Check-in'],['day','📝','දෛනික'],['bill','🧾','Bill'],['store','📦','Stores'],['me','👤','මම']]};
+function body(){
+if(DB&&!rd.u)return card('<h3>☁️ Cloud සම්බන්ධ වෙමින්...</h3><small>පළමු වතාවට Internet අවශ්‍යයි</small>');
+if(!D.u.length)return card(`<h3>🐦 Early Birds - Setup</h3>${DB?'<div class=pos>☁️ Cloud සම්බන්ධයි</div>':`<p><small>Phone කිහිපයක data share කිරීමට (Cloud): Firebase config එක මෙතැන paste කරන්න. අවශ්‍ය නැත්නම් මෙය මඟ හරින්න.</small></p><textarea id=cfg rows=4 placeholder="{ apiKey: ..., projectId: ... }"></textarea><button onclick=useCfg()>☁️ Cloud සම්බන්ධ කරන්න</button><hr>`}<p><b>Admin ගිණුම හදන්න</b></p>${fld('ඔබේ නම','<input id=an>')}${fld('Password (අකුරු 4+)','<input id=ap type=password>')}${fld('Password නැවත','<input id=ap2 type=password>')}<button class=ok onclick=mkAdmin()>Setup සම්පූර්ණ කරන්න</button>`);
+if(!U)return card(`<h3>🐦 Early Birds</h3>${fld('පරිශීලක',`<select id=lu>${L(D.u,u=>`<option value=${u.id}>${u.n} (${u.r=='A'?'Admin':'Supervisor'})</option>`)}</select>`)}${fld('Password','<input id=lp type=password onkeydown="if(event.key==\'Enter\')login()">')}<button class=ok onclick=login()>Login</button>`);
+const tb=TABS[U.r];if(!tb.some(x=>x[0]==T))T=tb[0][0];
+return `<div class="card hd"><b>🐦 Early Birds ${DB?'☁️':''}</b><span>${U.n} <button onclick=out()>Logout</button></span></div>${V[T]()}<nav>${L(tb,x=>`<button class="${x[0]==T?'on':''}" onclick="T='${x[0]}';R()"><b>${x[1]}</b>${x[2]}</button>`)}</nav>`}
+function render(keep){U=D.u.find(x=>x.id==UID)||null;const a=$('#app');let sv={},fo='';
+if(keep){document.querySelectorAll('#app [id]').forEach(e=>{if('value' in e&&e.type!='file')sv[e.id]=e.value});fo=(document.activeElement||{}).id}
+a.innerHTML=body();
+if(keep){Object.keys(sv).forEach(i=>{const e=document.getElementById(i);if(e&&sv[i]!=='')e.value=sv[i]});const f=fo&&document.getElementById(fo);if(f)f.focus()}else scrollTo(0,0)}
+const R=()=>render(0);let RT=0;const sched=()=>{cancelAnimationFrame(RT);RT=requestAnimationFrame(()=>render(1))};
+try{const c=document.createElement('canvas');c.width=c.height=180;const x=c.getContext('2d'),g=x.createLinearGradient(0,0,180,180);g.addColorStop(0,'#4aa8ff');g.addColorStop(1,'#0e6f6a');x.fillStyle=g;x.fillRect(0,0,180,180);x.font='96px serif';x.textAlign='center';x.fillText('🐦',90,125);const l=document.createElement('link');l.rel='apple-touch-icon';l.href=c.toDataURL('image/png');document.head.appendChild(l)}catch(e){}
+sync();render(0);
+</script></body></html>
