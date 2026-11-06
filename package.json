@@ -1,0 +1,1 @@
+{"name":"early-birds-phone-pwa","version":"3.0.0-preview","private":true,"description":"Static phone PWA; runtime requires no Node or Python server.","scripts":{"test:db":"node tests/postgres.cjs","test:accounts":"node tests/accounts.cjs","test:browser":"node tests/browser.cjs"},"devDependencies":{"@electric-sql/pglite":"0.5.15","playwright":"1.65.0"}}

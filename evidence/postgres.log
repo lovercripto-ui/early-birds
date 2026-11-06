@@ -1,0 +1,30 @@
+PASS Admin and assigned Supervisor state is scoped
+PASS Anonymous state fails closed
+PASS Supervisor cannot invoke Admin operations
+PASS Supervisor cannot submit to unassigned project
+PASS Request approval does not credit cash before receipt
+PASS Only recipient confirms and double receipt is blocked
+PASS Pending bills are separate; approval debits exact cents
+PASS Bill reversal retains history and restores balance
+PASS Invalid stock quantities fail
+PASS Duplicate stock approval cannot decrement twice
+PASS Partial damaged return conserves total stock
+PASS Over-return fails
+PASS Matching retries return one result; changed payload is rejected
+PASS Stale queue generation is blocked
+PASS Daily update atomically changes progress
+PASS Unapproved photo owner/path is rejected
+PASS Attendance enforces check-in/out state and site radius
+PASS Permanent handover moves project and cash; old records retain author
+PASS Old Supervisor cannot continue writing after replacement
+PASS Temporary replacement activates without moving historical balances
+PASS Negative-balance Supervisor can hand over with zero cash
+PASS Admin reimburses former Supervisor without a current project
+PASS Service-only password stamp cannot be called by a Supervisor
+PASS Custom GPS radius is enforced on the backend
+PASS Private gateway tables are not directly readable
+PASS Anonymous role has no gateway execute grant
+PASS Profile RLS prevents self-promotion
+PASS Admin deactivates only settled unused Supervisor accounts
+PASS Password invalidation rejects old JWT issue time
+PASS: 29 local Postgres integration scenarios. No hosted data was mutated.

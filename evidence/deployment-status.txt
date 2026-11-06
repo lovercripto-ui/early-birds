@@ -1,0 +1,8 @@
+Backend migration: APPLIED after explicit owner authorization.
+Managed account endpoint: ACTIVE, version 1, verify_jwt=true.
+Live security smoke: unauthenticated state RPC 401; unauthenticated account POST 401; CORS OPTIONS 200.
+Existing data: all 14 original public tables compared; unchanged apart from new default-valued profile flags.
+Hosted transactional smoke: 11 checks PASS; fixtures rolled back; private audit rows 0.
+GitHub write access: verified by successful review branch creation.
+Static frontend: publishing/release verification in progress; see final commit record.
+No billing changes, paid resources or manual GitHub Actions runs were requested.

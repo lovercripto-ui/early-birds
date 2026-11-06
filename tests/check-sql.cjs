@@ -1,0 +1,2 @@
+const fs=require('fs');const {PGlite}=require(process.env.EB_TEST_DEPS?process.env.EB_TEST_DEPS+'/@electric-sql/pglite':'@electric-sql/pglite');
+(async()=>{const db=new PGlite();await db.exec(fs.readFileSync(__dirname+'/schema-fixture.sql','utf8'));console.log('Fixture schema loaded');await db.exec(fs.readFileSync(__dirname+'/../backend/phone.sql','utf8'));console.log('Phone migration compiled locally; no hosted data touched');await db.close();})().catch(e=>{console.error(e.message,e.query?.slice(0,120),e.detail||'');process.exitCode=1;});

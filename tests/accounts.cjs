@@ -1,0 +1,25 @@
+// Edge handler unit tests with Auth/Admin API mocks. No network or real accounts.
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+let source=fs.readFileSync(__dirname+'/../backend/phone-users.ts','utf8').replace(/^import .*;\n/m,'').replace(/req:Request/g,'req').replace(/value:unknown/g,'value').replace(/r:any/g,'r').replace(/p:unknown/g,'p').replace(/\)!/g,')').replace(/caller.email!/g,'caller.email');
+let role='admin',active=true,must=false,insertError=false,created=[],deleted=[],stamps=[],updates=[],handler;
+const caller={id:'admin-id',email:'admin@example.test'};
+function createClient(url,key,options={}){const service={auth:{getUser:async token=>token==='bad'?{error:new Error('Bad JWT')}:{data:{user:caller}},signInWithPassword:async a=>a.password==='wrong'?{error:new Error('Wrong')}:{data:{user:caller,session:{access_token:'new-token'}}},admin:{createUser:async a=>{created.push(a);return {data:{user:{id:'new-supervisor'}}};},deleteUser:async id=>{deleted.push(id);return {data:{}};},updateUserById:async(id,a)=>{updates.push({id,a});return {data:{}};},signOut:async()=>({data:{}})}},rpc:async(name,a)=>{stamps.push({name,a});return {data:{ok:true}};},from:()=>({select(){return this;},eq(k,id){this.id=id;return this;},single:async function(){return {data:this.id===caller.id?{id:caller.id,role,phone_active:active,phone_must_change:must}:{id:this.id,role:this.id==='admin-target'?'admin':'supervisor'}};},insert:async a=>{created.push({profile:a});return insertError?{error:new Error('Insert failed')}:{data:{}};},update(a){updates.push({profile:a});return this;},then(resolve){resolve({data:{}});}})};return service;}
+const context={Deno:{env:{get:k=>k==='SUPABASE_URL'?'https://example.test':k==='SUPABASE_SERVICE_ROLE_KEY'?'service-test-key':'anon-test-key'},serve:fn=>handler=fn},createClient,Response,Request,Set,Error,Number,String,JSON};vm.createContext(context);vm.runInContext(source,context);
+async function call(body,token='valid',origin='https://lovercripto-ui.github.io'){return handler(new Request('https://example.test/users',{method:'POST',headers:{'Content-Type':'application/json',Origin:origin,Authorization:token?'Bearer '+token:''},body:JSON.stringify(body)}));}
+let count=0;async function test(name,fn){await fn();console.log('PASS',name);count++;}
+(async()=>{
+ await test('Unknown origin rejected',async()=>assert.equal((await call({op:'user.add'},'valid','https://evil.test')).status,403));
+ await test('Missing token rejected',async()=>assert.equal((await call({},'')).status,401));
+ await test('Invalid Auth token rejected',async()=>assert.equal((await call({},'bad')).status,401));
+ await test('Inactive profile rejected',async()=>{active=false;assert.equal((await call({})).status,403);active=true;});
+ await test('Supervisor cannot create accounts',async()=>{role='supervisor';assert.equal((await call({op:'user.add'})).status,403);role='admin';});
+ await test('Temporary-password Admin cannot manage accounts',async()=>{must=true;assert.equal((await call({op:'user.add'})).status,403);must=false;});
+ await test('Current password verified before change',async()=>assert.equal((await call({op:'password',current:'wrong',password:'New-Test-123'})).status,403));
+ await test('Weak passwords rejected',async()=>assert.equal((await call({op:'user.add',username:'new@example.test',name:'New',password:'1234'})).status,400));
+ await test('Admin creates only Supervisor profiles',async()=>{assert.equal((await call({op:'user.add',username:'new@example.test',name:'New',password:'New-Test-123'})).status,200);const p=created.find(x=>x.profile)?.profile;assert.equal(p.role,'supervisor');assert.equal(p.phone_must_change,true);});
+ await test('Profile failure cleans up newly created Auth account',async()=>{insertError=true;assert.equal((await call({op:'user.add',username:'other@example.test',name:'Other',password:'Other-Test-123'})).status,400);assert(deleted.includes('new-supervisor'));insertError=false;});
+ await test('Supervisor reset cannot target Admin',async()=>assert.equal((await call({op:'user.reset',id:'admin-target',password:'New-Test-123'})).status,403));
+ await test('Password reset stamps gateway credential invalidation',async()=>{assert.equal((await call({op:'user.reset',id:'supervisor-id',password:'New-Test-123'})).status,200);assert(stamps.some(s=>s.name==='phone_auth_stamp'&&s.a.p_target==='supervisor-id'&&!s.a.p_clear_temp));});
+ await test('Own verified password change stamps and requests re-login',async()=>{const r=await call({op:'password',current:'Old-Test-123',password:'New-Test-123'});assert.equal(r.status,200);assert.equal((await r.json()).relogin,true);assert(stamps.some(s=>s.a.p_clear_temp===true));});
+ console.log(`PASS: ${count} mocked account-handler cases. This mock run did not invoke or deploy the live Edge Function.`);
+})().catch(e=>{console.error(e);process.exitCode=1;});

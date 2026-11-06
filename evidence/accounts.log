@@ -1,0 +1,14 @@
+PASS Unknown origin rejected
+PASS Missing token rejected
+PASS Invalid Auth token rejected
+PASS Inactive profile rejected
+PASS Supervisor cannot create accounts
+PASS Temporary-password Admin cannot manage accounts
+PASS Current password verified before change
+PASS Weak passwords rejected
+PASS Admin creates only Supervisor profiles
+PASS Profile failure cleans up newly created Auth account
+PASS Supervisor reset cannot target Admin
+PASS Password reset stamps gateway credential invalidation
+PASS Own verified password change stamps and requests re-login
+PASS: 13 mocked account-handler cases. This mock run did not invoke or deploy the live Edge Function.

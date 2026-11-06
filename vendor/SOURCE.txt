@@ -1,0 +1,1 @@
+@supabase/supabase-js 2.95.0 UMD bundle, from its official npm package. Browser publishable key only; no service key.
