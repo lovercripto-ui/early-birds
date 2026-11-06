@@ -1,1 +1,1 @@
-PASS: 48 Chromium checks at desktop, Android-sized and iPhone-sized viewports. Real SDK, mocked Auth/RPC, real service-worker subpath scope, offline queue. Physical iOS/Android and live account sign-in NOT tested.
+PASS: 49 Chromium checks at desktop, Android-sized and iPhone-sized viewports. Real SDK, mocked Auth/RPC, real service-worker subpath scope, offline queue. Physical iOS/Android and live account sign-in NOT tested.

@@ -6,3 +6,6 @@
 @media print{header,.sidebar,button,form,.toolbar,.note,.connection,.footer,#toast,.no-print,dialog{display:none!important}body{background:white;color:#000}.layout{display:block}main{padding:0;max-width:none}.card{box-shadow:none;break-inside:avoid;border-color:#aaa}.stats{grid-template-columns:repeat(4,1fr)}.grid{grid-template-columns:repeat(2,1fr)}.table-wrap{overflow:visible}h1{font-size:24px}.muted,small{color:#444}.badge{border:1px solid #aaa}.photo{display:none}}
 
 header{padding-top:calc(12px + env(safe-area-inset-top,0px));height:auto;min-height:84px}main{padding-bottom:calc(100px + env(safe-area-inset-bottom,0px))}@media(max-width:650px){header{padding-top:calc(10px + env(safe-area-inset-top,0px));min-height:70px}.account{flex-wrap:wrap;justify-content:flex-end}.account>div{max-width:100px;overflow-wrap:anywhere}}
+
+/* Keep mobile Safari from zooming the page when a form field receives focus. */
+input,select,textarea{font-size:16px}

@@ -11,11 +11,12 @@
 - Account function `early-birds-phone-users` deployed ACTIVE, version 1, with platform JWT verification enabled. Actual unauthenticated POST returned 401; actual CORS preflight returned 200 with the expected Pages origin.
 - **11 hosted role-simulated transaction checks passed**: assignment scope, Supervisor/Admin denial, approval does not credit cash, confirmed receipt, pending/approved bill treatment with exact cents, reversal, negative quantity rejection, stock issue, duplicate approval rejection and damaged-return conservation. Every test record was rolled back. Private audit test rows remaining: 0.
 - All pre-existing data in **14 public tables compared before/after: unchanged**, excluding the two newly added profile fields at their defaults. Table data snapshots are private and never uploaded to the repository.
-- **29 local Postgres cases**, **48 Chromium browser checks**, **13 mocked account-handler cases** pass. Browser tests cover desktop, Android-sized and iPhone-sized layouts, the actual pinned SDK, mocked login/data responses, real subpath service-worker install, owner-scoped offline queue, old-schema detection and legacy export. The export test confirms old password hashes are excluded and source localStorage is untouched.
+- **29 local Postgres cases**, **49 Chromium browser checks**, **13 mocked account-handler cases** pass. Browser tests cover desktop, Android-sized and iPhone-sized layouts, the actual pinned SDK, mocked login/data responses, real subpath service-worker install, owner-scoped offline queue, old-schema detection and legacy export. The export test confirms old password hashes are excluded and source localStorage is untouched.
 - Internal mobile visual review completed, Sinhala font packaged locally. Runtime syntax checks passed. Node/Python are not required to run the hosted app.
 
 ## Still requires the owner
 
+- Login compatibility includes existing passwords shorter than the new-account policy; newly created/reset passwords still require 10 characters. Mobile input text is 16px to avoid Safari focus zoom.
 - Actual owner/Supervisor sign-in and two physical devices. Database role simulation and mocked browser authentication are not real user login tests. No existing password was requested, recovered or changed by the assistant.
 - Actual iPhone Safari/Android Chrome installation, launch, GPS permissions/accuracy and photo upload. Chromium viewport emulation is not physical-device testing.
 - Google OAuth Client ID, consent and actual Drive upload/download. Drive remains optional and is not yet configured.
