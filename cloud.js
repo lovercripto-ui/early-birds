@@ -4,7 +4,7 @@ window.EBCloud=(()=>{
  const cfg=window.EB_CONFIG||{};
  if(!cfg.supabaseUrl?.startsWith('https://')||!cfg.publishableKey||!window.supabase?.createClient)throw new Error('Cloud configuration/library missing');
  const client=window.supabase.createClient(cfg.supabaseUrl,cfg.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storageKey:'early-birds-phone-auth-v3'}});
- let mode='auto',current=null,lastRaw=null;
+ let mode='auto',current=null,lastRaw=null,companyCache;
  const failure=(message,status=400)=>Object.assign(new Error(message),{status});
  function check(r){if(r.error){const e=failure(r.error.message,r.error.status||(r.error.code==='42501'?401:400));e.code=r.error.code;if(/fetch|network/i.test(e.message)){e.network=true;e.status=0;}throw e;}return r.data;}
  const rpc=async(n,a)=>check(await client.rpc(n,a));
@@ -43,14 +43,14 @@ window.EBCloud=(()=>{
    days:sort(raw.daily_updates).map(r=>({id:r.id,user:r.supervisor_id,project:r.project_id,workers:r.worker_count,stage:r.work_stage,note:r.notes,photo:r.photo_paths?.[0]||'',progress:null,previousProgress:null,time:r.created_at})),handovers:[],audit:[],adjustments:[]};
   return {user:self,data,serverTime:iso(),driveClientId:cfg.googleClientId||'',cloudMode:'existing'};
  }
- async function state(){await user();let result;
+ async function state(){try{await user();}catch(e){if(e.status===401&&cfg.installFunction){const r=await client.functions.invoke(cfg.installFunction,{body:{op:'status'}});if(!r.error&&!r.data.initialized&&r.data.setupEnabled)return {setup:true};}throw e;}let result;
   if(mode!=='existing'){
    const r=await client.rpc('phone_state');
    if(r.error){if(r.error.code==='PGRST202'||r.error.code==='42883')mode='existing';else check(r);}
    else{mode='phone';result=r.data;}
   }
   if(mode==='existing')result=await existingState();else {result.driveClientId=cfg.googleClientId||'';result.cloudMode='phone';result.user.username=current.email;}
-  return await privatePhotos(result);
+  if(companyCache===undefined){const w=await client.functions.invoke(cfg.authFunction,{body:{op:'workspace.get'}});companyCache=w.error?'':w.data?.company||'';}result.data.companyName=companyCache;return await privatePhotos(result);
  }
  async function upload(a){
   if(!a.photo||!String(a.photo).startsWith('data:'))return a;
@@ -108,11 +108,11 @@ window.EBCloud=(()=>{
   if(path!=='/api/action'||!a)throw failure('Unknown endpoint');
   if(a.op==='login'){check(await client.auth.signInWithPassword({email:a.username.trim(),password:a.password}));return {ok:true};}
   if(a.op==='logout'){check(await client.auth.signOut({scope:'local'}));current=null;return {ok:true};}
-  if(a.op==='setup')throw failure('Existing cloud workspace එකේ Admin account එකෙන් login වෙන්න');
+  if(a.op==='setup'){const r=check(await client.functions.invoke(cfg.installFunction,{body:a}));check(await client.auth.signInWithPassword({email:a.username.trim(),password:a.password}));return r;}
   await user();
-  if(['user.add','user.reset','password','user.active'].includes(a.op)){
+  if(['user.add','user.reset','password','user.active','account.email','company.set'].includes(a.op)){
    if(mode!=='phone')throw failure('Account management activate කිරීමට backend update අනුමත කළ යුතුයි',409);
-   if(a.op==='user.active'){const snapshot=await state();a={...a,active:!snapshot.data.users.find(u=>u.id===a.id)?.active};}const result=await edge(a);if(a.op==='password')await client.auth.signOut({scope:'local'});return result;
+   if(a.op==='user.active'){const snapshot=await state();a={...a,active:!snapshot.data.users.find(u=>u.id===a.id)?.active};}const result=await edge(a);if(a.op==='company.set')companyCache=undefined;if(a.op==='password')await client.auth.signOut({scope:'local'});return result;
   }
   if(['backup.restore','legacy.import'].includes(a.op))throw failure('Cloud data import/restore තවම activate කර නැහැ. Local JSON එකෙන් live database replace නොකෙරේ.',409);
   if(mode==='auto')await state();

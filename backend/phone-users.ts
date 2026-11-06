@@ -1,6 +1,6 @@
-// Deployment is pending owner approval of backend/phone.sql. No secret belongs in config.js.
+// Auth/account operations. No secret belongs in config.js.
 import {createClient} from 'npm:@supabase/supabase-js@2.95.0';
-const ORIGINS=new Set(['https://lovercripto-ui.github.io','http://localhost:8080','http://127.0.0.1:8080']);
+const ORIGINS=new Set([Deno.env.get('EB_APP_ORIGIN')||'https://lovercripto-ui.github.io']);
 Deno.serve(async(req:Request)=>{
  const origin=req.headers.get('origin')||'';
  const headers={'Content-Type':'application/json','Access-Control-Allow-Origin':ORIGINS.has(origin)?origin:'https://lovercripto-ui.github.io','Vary':'Origin','Access-Control-Allow-Headers':'authorization, apikey, content-type, x-client-info','Access-Control-Allow-Methods':'POST, OPTIONS','Cache-Control':'no-store'};
@@ -21,6 +21,11 @@ Deno.serve(async(req:Request)=>{
   const check=(r:any)=>{if(r.error)throw r.error;return r.data;};
   const validPassword=(p:unknown)=>{if(typeof p!=='string'||p.length<10||p.length>256)throw new Error('Password must have 10–256 characters');return p;};
   const client=createClient(url,Deno.env.get('SUPABASE_ANON_KEY')!,{global:{headers:{Authorization:authorization}},auth:{persistSession:false,autoRefreshToken:false}});
+  if(body.op==='workspace.get'){
+   check(await client.rpc('phone_state'));
+   const workspace=check(await service.rpc('phone_install_status'));
+   return reply({company:workspace.company});
+  }
   if(body.op==='password'){
    const reauth=createClient(url,Deno.env.get('SUPABASE_ANON_KEY')!,{auth:{persistSession:false,autoRefreshToken:false}});
    const signed=await reauth.auth.signInWithPassword({email:caller.email!,password:String(body.current||'')});
@@ -31,6 +36,21 @@ Deno.serve(async(req:Request)=>{
    return reply({ok:true,relogin:true});
   }
   if(profile.data.role!=='admin'||profile.data.phone_must_change)return reply({error:'Admin only'},403);
+  check(await client.rpc('phone_state'));
+  if(body.op==='account.email'||body.op==='company.set'){
+   const reauth=createClient(url,Deno.env.get('SUPABASE_ANON_KEY')!,{auth:{persistSession:false,autoRefreshToken:false}});
+   const signed=await reauth.auth.signInWithPassword({email:caller.email!,password:String(body.current||'')});
+   if(signed.error||signed.data.user?.id!==caller.id)return reply({error:'Current password is incorrect'},403);
+   try{
+    if(body.op==='account.email'){
+     const email=String(body.email||'').trim().toLowerCase();
+     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))throw new Error('Valid email required');
+     // Native Auth confirmation flow; never auto-confirm a future owner's email.
+     check(await reauth.auth.updateUser({email}));return reply({ok:true,confirmationRequired:true});
+    }
+    check(await service.rpc('phone_company_set',{p_company:String(body.company||'').trim()}));return reply({ok:true});
+   }finally{await reauth.auth.signOut({scope:'local'});}
+  }
   if(body.op==='user.add'){
    const email=String(body.username||'').trim().toLowerCase(),name=String(body.name||'').trim();
    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||!name||name.length>160)throw new Error('Valid email and name required');

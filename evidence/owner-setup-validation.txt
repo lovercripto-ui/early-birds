@@ -1,0 +1,17 @@
+Owner setup and recovery validation
+
+49 existing browser checks PASS.
+29 existing database scenarios PASS.
+17 mocked account-handler cases PASS.
+10 installation database cases PASS.
+8 installer handler cases PASS.
+8 owner recovery/setup browser cases PASS.
+
+Browser Auth traffic mocked; no physical phones or real owner password tested.
+Hosted installation status: initialized=true; setup cannot claim existing data.
+All 14 pre-existing public tables retained identical counts and row fingerprints.
+Original Admin UUID retained; requested email corrected through Auth Admin API.
+One-time operator recovery endpoint replaced with permanent 410 response.
+No password chosen, viewed, or reset by the agent.
+
+Per-buyer deployments require their own project/site and mail configuration; this is not a shared multi-tenant release.

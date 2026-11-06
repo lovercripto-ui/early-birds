@@ -1,1 +1,1 @@
-window.EB_CONFIG = Object.freeze({"supabaseUrl":"https://stwnvhgocwgwwprmypmv.supabase.co","publishableKey":"sb_publishable_3ALzFPpQ_yd5qn7LIJmd3Q_63A3of97","googleClientId":"","authFunction":"early-birds-phone-users"});
+window.EB_CONFIG = Object.freeze({"supabaseUrl":"https://stwnvhgocwgwwprmypmv.supabase.co","publishableKey":"sb_publishable_3ALzFPpQ_yd5qn7LIJmd3Q_63A3of97","googleClientId":"","installFunction":"early-birds-phone-install","authFunction":"early-birds-phone-users"});

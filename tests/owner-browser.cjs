@@ -1,0 +1,32 @@
+const fs=require('fs'),path=require('path'),http=require('http'),assert=require('assert');
+const {chromium}=require(process.env.EB_TEST_DEPS+'/playwright');
+const root=path.resolve(__dirname,'../deploy'),calls=[];let browser,n=0;
+const server=http.createServer((req,res)=>{const p=path.join(root,decodeURIComponent(new URL(req.url,'http://test').pathname.replace(/^\/early-birds\//,''))||'index.html');if(!p.startsWith(root)||!fs.existsSync(p)){res.writeHead(404);return res.end();}res.setHeader('Content-Type',p.endsWith('.js')?'text/javascript':p.endsWith('.css')?'text/css':p.endsWith('.html')?'text/html':'application/octet-stream');res.end(fs.readFileSync(p));});
+async function test(name,fn){await fn();console.log('PASS',name);n++;}
+(async()=>{
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));const base=`http://127.0.0.1:${server.address().port}/early-birds/`;
+ browser=await chromium.launch({executablePath:process.env.EB_CHROMIUM_EXECUTABLE,args:['--no-sandbox','--disable-dev-shm-usage','--no-zygote'],headless:true});
+ const context=await browser.newContext({viewport:{width:390,height:844}}),page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ const id='00000000-0000-4000-8000-000000000001',user={id,email:'owner@example.test',aud:'authenticated',role:'authenticated',app_metadata:{provider:'email'},user_metadata:{},created_at:new Date().toISOString()};
+ const jwt='eyJhbGciOiJIUzI1NiJ9.'+Buffer.from(JSON.stringify({sub:id,exp:Math.floor(Date.now()/1000)+3600,role:'authenticated',aud:'authenticated'})).toString('base64url')+'.test';
+ const session={access_token:jwt,refresh_token:'test-refresh',expires_in:3600,token_type:'bearer',user};
+ let setup=false;
+ await context.route('https://stwnvhgocwgwwprmypmv.supabase.co/**',async route=>{const req=route.request(),p=new URL(req.url()).pathname,b=req.postDataJSON?.()||{};calls.push({p,b});let body={};
+  if(p.endsWith('/functions/v1/early-birds-phone-install'))body=b.op==='status'?{initialized:!setup,setupEnabled:setup}:{ok:true};
+  else if(p.endsWith('/auth/v1/verify')||p.endsWith('/auth/v1/token'))body=session;
+  else if(p.endsWith('/auth/v1/user'))body=user;
+  else if(p.endsWith('/rpc/phone_state'))body={user:{id,name:'Owner',username:user.email,role:'admin',active:true},data:{users:[],projects:[],bills:[],transfers:[],requests:[],items:[],equipment:[],stockRequests:[],days:[],attendance:[],handovers:[],audit:[],adjustments:[],balances:{},revision:0}};
+  await route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(body)});
+ });
+ await page.goto(base+'recover.html');
+ await test('Recovery page has no overflow or runtime errors',async()=>{assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);assert.deepEqual(errors,[]);});
+ await test('Reset request uses the entered email and isolated callback',async()=>{await page.locator('#request [name=email]').fill(user.email);await page.locator('#request button').click();await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('Inbox'));const c=calls.find(c=>c.p.endsWith('/recover'));assert.equal(c.b.email,user.email);});
+ await test('Foreign recovery link is rejected without verification request',async()=>{await page.locator('#verify [name=link]').fill('https://evil.test/auth/v1/verify?type=recovery&token=secret');await page.locator('#verify button').click();await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('අවශ්‍යයි'));assert(!calls.some(c=>c.p.endsWith('/verify')));});
+ await test('Valid email proof opens password form and clears pasted secret',async()=>{await page.locator('#verify [name=link]').fill('https://stwnvhgocwgwwprmypmv.supabase.co/auth/v1/verify?type=recovery&token=test-only-token');await page.locator('#verify button').click();await page.locator('#change').waitFor({state:'visible'});assert.equal(await page.locator('#verify [name=link]').inputValue(),'');assert.equal(calls.find(c=>c.p.endsWith('/verify')).b.type,'recovery');});
+ await test('Mismatched passwords never reach Auth',async()=>{await page.locator('#change [name=password]').fill('Test-Password-123');await page.locator('#change [name=confirm]').fill('Test-Password-456');await page.locator('#change button').click();await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('ගැළපිය'));assert(!calls.some(c=>c.b.password));});
+ await test('New password is saved and gateway sessions invalidated',async()=>{await page.locator('#change [name=confirm]').fill('Test-Password-123');await page.locator('#change button').click();await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('Password save'));assert(calls.some(c=>c.p.endsWith('/user')&&c.b.password==='Test-Password-123'));assert(calls.some(c=>c.p.endsWith('/early-birds-phone-users')&&c.b.op==='password'));assert.equal(await page.evaluate(()=>localStorage.length),0);});
+ setup=true;await page.goto(base);
+ await test('Fresh installation displays company and installation token fields',async()=>{await page.locator('form[data-op=setup]').waitFor();assert.equal(await page.locator('[name=setupToken]').getAttribute('minlength'),'32');assert.equal(await page.locator('[name=company]').count(),1);});
+ await test('Wizard submits matching credentials to provisioning endpoint',async()=>{for(const [name,value] of Object.entries({company:'Buyer Company',name:'Buyer',username:user.email,password:'New-Buyer-Password',password2:'New-Buyer-Password',setupToken:'t'.repeat(40)}))await page.locator(`form[data-op=setup] [name=${name}]`).fill(value);await page.locator('form[data-op=setup] button').click();await page.locator('header').waitFor();assert(calls.some(c=>c.b.op==='setup'&&c.b.company==='Buyer Company'));});
+ await context.close();console.log(`PASS: ${n} owner browser cases; all Auth traffic mocked.`);
+})().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{await browser?.close();server.close();});

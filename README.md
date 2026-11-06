@@ -1,3 +1,7 @@
+# Owner setup and recovery update
+
+Version 3.1 adds a token-protected first-install wizard, isolated password recovery, company settings and native confirmed Admin-email changes. See [SELLER_SETUP.md](SELLER_SETUP.md) for installation, mail delivery limits and handover scope. Existing workspaces stay locked against setup.
+
 # Early Birds Phone PWA
 
 Android/iPhone Home Screen app, served as static files on GitHub Pages with Supabase Auth, private media and transactional data operations.
