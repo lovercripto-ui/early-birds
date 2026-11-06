@@ -5,10 +5,21 @@
  const say=text=>$('#status').textContent=text;
  const check=r=>{if(r.error)throw new Error(r.error.message);return r.data;};
  let verified=false,busy=false;
- function ready(){verified=true;$('#request').hidden=true;$('#verify').hidden=true;$('#change').hidden=false;say('Email තහවුරු වුණා. ඔබටම පමණක් දන්නා අලුත් password එකක් දාන්න.');}
+ function ready(){verified=true;$('#request').hidden=true;$('#verify').hidden=true;$('#change').hidden=false;say('Account recovery තහවුරු වුණා. ඔබටම පමණක් දන්නා අලුත් password එකක් දාන්න.');}
  async function initial(){
   const hash=new URLSearchParams(location.hash.slice(1));
   if(hash.get('type')!=='recovery')return;
+  if(hash.get('token_hash')){
+   // Fragment proof never reaches GitHub/HTTP logs. Remove it from history,
+   // and require an explicit click so previews cannot consume a one-time link.
+   const token=hash.get('token_hash');history.replaceState(null,'',location.pathname);
+   $('#request').hidden=true;$('#verify').hidden=true;
+   $('#change').hidden=true;$('#proofContinue')?.remove();verified=false;
+   const button=document.createElement('button');button.type='button';button.id='proofContinue';button.textContent='අලුත් password එකක් දාන්න';
+   $('#change').before(button);say('ඔබට ලබාදුන් එක් වරක් භාවිතා කළ හැකි recovery link එක සූදානම්.');
+   button.onclick=async()=>{if(busy)return;busy=true;button.disabled=true;try{check(await client.auth.verifyOtp({token_hash:token,type:'recovery'}));button.remove();ready();}catch(e){say(e.message);button.disabled=false;}finally{busy=false;}};
+   return;
+  }
   try{const data=check(await client.auth.getSession());if(!data.session)throw new Error('Link එක කල් ඉකුත් වී ඇත. අලුත් reset email එකක් ඉල්ලන්න.');history.replaceState(null,'',location.pathname);ready();}
   catch(e){history.replaceState(null,'',location.pathname);say(e.message);}
  }
@@ -34,5 +45,6 @@
    }
   }catch(e){say(e.message||'නැවත උත්සාහ කරන්න.');}finally{busy=false;button.disabled=false;}
  });
+ window.addEventListener('hashchange',initial);
  initial();
 })();

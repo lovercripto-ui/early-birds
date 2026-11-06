@@ -5,7 +5,7 @@ Owner setup and recovery validation
 17 mocked account-handler cases PASS.
 10 installation database cases PASS.
 8 installer handler cases PASS.
-8 owner recovery/setup browser cases PASS.
+10 owner recovery/setup browser cases PASS (includes direct one-time proof and explicit click).
 
 Browser Auth traffic mocked; no physical phones or real owner password tested.
 Hosted installation status: initialized=true; setup cannot claim existing data.
